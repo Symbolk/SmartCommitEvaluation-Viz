@@ -5,6 +5,7 @@ import config
 
 root = config.root_path
 
+
 def prepare(path, header):
     if os.path.exists(path):
         os.remove(path)
@@ -12,6 +13,7 @@ def prepare(path, header):
     if not os.path.isfile(path):
         with open(path, 'w') as fw:
             fw.write(header)
+            print("Results will be saved in: " + path)
 
 
 def same_week(date1, date2):
@@ -124,6 +126,7 @@ def agg_by_week(df):
             fa.write('\n' + ','.join([str(l) for l in line]))
     print(len(all_users))
 
+
 def add_week_column(df):
     path = 'usage_data/out.csv'
     week = 0
@@ -192,11 +195,32 @@ def hue_groups_week(df):
             fa.write('\n' + ','.join([str(l) for l in line]) + ',' + str(m) + ',manual')
 
 
+# compute #weeks each user used the tool
+def compute_used_week(df):
+    groups = df.groupby(['userId'])
+    path = os.path.join(root, 'user_week_uses.csv')
+    prepare(path, 'userId,weeks,#weeks,#total_uses')
+    with open(path, 'a') as fa:
+        for group_name, group in groups:
+            line = []
+            line.append(group_name)
+            weeks = set()
+            for i, row in group.iterrows():
+                weeks.add(int(row['week']))
+
+            line.append('&'.join(str(w) for w in weeks))
+            line.append(len(weeks))
+            line.append(len(group))
+
+            fa.write('\n' + ','.join([str(l) for l in line]))
+
+
 if __name__ == '__main__':
     # agg_by_time(df)
     # count_controls(df)
-    # add_week_column(pd.read_csv('usage_data/statistics.csv'))
+    # add_week_column(pd.read_csv('statistics.csv'))
 
-    # agg_by_week_user(pd.read_csv('usage_data/20200518-20210123.csv'))
-    hue_groups_week(pd.read_csv(os.path.join(root, 'usage_data/20200518-20210123.csv')))
-    # agg_by_week(pd.read_csv(os.path.join(root, 'usage_data/20200518-20210123.csv')))
+    # agg_by_week_user(pd.read_csv('20200518-20210123.csv'))
+    # hue_groups_week(pd.read_csv(os.path.join(root, '20200518-20210123.csv')))
+    # agg_by_week(pd.read_csv(os.path.join(root, '20200518-20210123.csv')))
+    compute_used_week(pd.read_csv(os.path.join(config.usage_data_path, '20200518-20210123.csv')))
